@@ -26,20 +26,16 @@ type Client struct {
 	Users      *UsersService
 }
 
-const (
-	// APIBase is the URL prefix for the wakatime API
-	APIBase = "https://wakatime.com/api/v1/"
-)
-
 // NewClient returns a new Client with the given API key.
-func NewClient(apikey string, httpClient *http.Client) *Client {
+func NewClient(apikey string, apibase string, httpClient *http.Client) *Client {
 	c := &Client{}
 	if httpClient == nil {
 		httpClient = &http.Client{}
 	}
 	c.common = service{
-		apikey: apikey,
-		client: httpClient,
+		apikey:  apikey,
+		apiBase: apibase,
+		client:  httpClient,
 	}
 
 	c.Commits = (*CommitService)(&c.common)
@@ -54,12 +50,13 @@ func NewClient(apikey string, httpClient *http.Client) *Client {
 }
 
 type service struct {
-	apikey string
-	client *http.Client
+	apikey  string
+	apiBase string
+	client  *http.Client
 }
 
 func (s *service) get(ctx context.Context, endpoint string, query url.Values) ([]byte, error) {
-	url := APIBase + endpoint
+	url := s.apiBase + endpoint
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request err :%w", err)
@@ -90,7 +87,7 @@ func (s *service) get(ctx context.Context, endpoint string, query url.Values) ([
 
 func (s *service) post(ctx context.Context, endpoint string, query url.Values, params interface{}) ([]byte, error) {
 
-	url := APIBase + endpoint
+	url := s.apiBase + endpoint
 
 	var reqBody io.Reader
 
